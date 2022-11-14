@@ -3,36 +3,53 @@ from keras.callbacks import EarlyStopping
 from keras.layers import Dense
 from keras.models import Sequential
 from keras.models import load_model
+import pandas as pd
 import matplotlib.pyplot as plt
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
 
-dataset = np.loadtxt("C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\yours.csv", delimiter=";", encoding='utf-8', dtype=None)
+dataset = pd.read_csv("C:\\Users\\Admin\\Desktop\\Кандидат\\neural_network\\dataset.csv", delimiter=";")
+dups = dataset.duplicated(subset=['X','Y','Z'])
+dataset = dataset[~dups]
+#dataset = np.loadtxt("C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\yours.csv", delimiter=";", encoding='utf-8', dtype=None)
 
 angles = 6
 
-X_super = dataset[:90000,:3]
-Y_super = dataset[:90000,3:]
+X_super = dataset.iloc[:10000,:3].values
+Y_super = dataset.iloc[:10000,3:].values
 
-X_super_test = dataset[90000:,:3]
-Y_super_test = dataset[90000:,3:]
+X_super_test = dataset.iloc[90000:,:3].values
+Y_super_test = dataset.iloc[90000:,3:].values
 sss = X_super_test[0:1, :3]
 model = Sequential()
 
-# The Input Layer :
-model.add(Dense(128, kernel_initializer='normal', input_dim = X_super.shape[1], activation='relu'))
+# from sklearn.model_selection import train_test_split
+#
+# X_train, X_test, y_train, y_test = train_test_split(X_super, Y_super, test_size=0.15, shuffle=1, random_state=0)
+#
+# from sklearn.preprocessing import MinMaxScaler
+# scaler = MinMaxScaler(feature_range=(-1, 1))
+# X_train = scaler.fit_transform(X_train)
+# scaler = MinMaxScaler(feature_range=(-1, 1))
+# X_test = scaler.fit_transform(X_test)
+#
+# X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.18, random_state=0)#0.25
 
-# The Hidden Layers :
-model.add(Dense(100, kernel_initializer='normal', activation='relu'))
-# NN_model.add(Dense(256, kernel_initializer='normal',activation='relu'))
-model.add(Dense(100, kernel_initializer='normal', activation='relu'))
+model.add(Dense(3, activation='linear', input_shape=(3, )))
+model.add(Dense(100, activation='linear'))
+model.add(Dense(6, activation='linear'))
 
-# The Output Layer :
-model.add(Dense(angles, kernel_initializer='normal', activation='linear'))
-
-model.compile(loss='mean_absolute_error', optimizer='Adam', metrics=['accuracy'])
+model.compile(optimizer='Adam', loss='mae', metrics=['accuracy'])
 
 model.summary()
-early_stop = EarlyStopping(monitor='acc', patience=15)
-train_model=model.fit(X_super, Y_super, epochs=300, validation_split =0.2, callbacks=[early_stop])
+#early_stop = EarlyStopping(monitor='accuracy', patience=15)
+train_model=model.fit(
+    x=X_super,
+    y=Y_super,
+    epochs=200,
+    verbose=2,
+    validation_data=(X_super_test, Y_super_test)
+)
 
 y_pred = model.predict(X_super_test[0:1, :3])
 
