@@ -1,6 +1,6 @@
 import numpy as np
 from keras.callbacks import EarlyStopping
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 from keras.models import Sequential
 from keras.models import load_model
 import pandas as pd
@@ -8,21 +8,29 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
-dataset11 = pd.read_csv("C:\\Users\\Admin\\Desktop\\Кандидат\\neural_network\\dataset.csv", delimiter=";")
-dups = dataset11.duplicated(subset=['X','Y','Z'])
-dataset2 = dataset11[~dups]
-dataset = dataset2.values
-dataset = (dataset - dataset.mean(axis=0, keepdims=True)) / (dataset.std(axis=0, keepdims=True))
+dataset = pd.read_csv("C:\\Users\\Admin\\Desktop\\Кандидат\\neural_network\\dataset.csv", delimiter=";")
+dups = dataset.duplicated(subset=['X','Y','Z'])
+dataset = dataset[~dups]
 #dataset = np.loadtxt("C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\yours.csv", delimiter=";", encoding='utf-8', dtype=None)
 
 angles = 6
 
-X_super = dataset[:20000,:3]
-Y_super = dataset[:20000,3:]
 
-X_super_test = dataset[90000:,:3]
-Y_super_test = dataset[90000:,3:]
+
+X_super_test = dataset.iloc[90000:,:3].values
+Y_super_test = dataset.iloc[90000:,3:].values
 sss = X_super_test[0:1, :3]
+
+X_super = dataset.iloc[:10000,:3].values
+Y_super = dataset.iloc[:10000,3:].values
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler(feature_range=(-1, 1))
+X_train = scaler.fit_transform(X_super)
+
+scaler = MinMaxScaler(feature_range=(-1, 1))
+Y_train = scaler.fit_transform(Y_super)
+
 model = Sequential()
 
 # from sklearn.model_selection import train_test_split
@@ -37,20 +45,22 @@ model = Sequential()
 #
 # X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.18, random_state=0)#0.25
 
-model.add(Dense(3, activation='relu', input_shape=(3, )))
+model.add(Dense(3, activation='linear', input_shape=(3, )))
+model.add(Dropout())
 model.add(Dense(100, activation='relu'))
+model.add(Dropout())
 model.add(Dense(6, activation='linear'))
 
-model.compile(optimizer='Adam', loss='mae')
+model.compile(optimizer=tf.keras.optimizers.Adam(0.05), loss=tf.losses.mean_squared_error, metrics=['accuracy'])
 
 model.summary()
 #early_stop = EarlyStopping(monitor='accuracy', patience=15)
 train_model=model.fit(
-    x=X_super,
-    y=Y_super,
+    x=X_train,
+    y=Y_train,
     epochs=200,
     verbose=2,
-    validation_data=(X_super_test, Y_super_test),
+    #validation_data=(X_super_test, Y_super_test),
     callbacks=[tf.keras.callbacks.TensorBoard('logs/1/train')]
 )
 
