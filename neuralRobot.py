@@ -7,10 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
-dataset = pd.read_csv(
-    "C:\\Users\\Admin\\Desktop\\Кандидат\\neural_network\\dataset.csv", delimiter=";"
-)
+dataset = pd.read_csv("dataset.csv", delimiter=";")
 dups = dataset.duplicated(subset=["X", "Y", "Z"])
 dataset = dataset[~dups]
 # dataset = np.loadtxt("C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\yours.csv", delimiter=";", encoding='utf-8', dtype=None)
@@ -25,13 +24,15 @@ sss = X_super_test[0:1, :3]
 X_super = dataset.iloc[:10000, :3].values
 Y_super = dataset.iloc[:10000, 3:].values
 
-from sklearn.preprocessing import MinMaxScaler
 
 scaler = MinMaxScaler(feature_range=(-1, 1))
 X_train = scaler.fit_transform(X_super)
+X_val = scaler.transform(X_super_test)
 
+# TODO no Y transform
 scaler = MinMaxScaler(feature_range=(-1, 1))
 Y_train = scaler.fit_transform(Y_super)
+Y_val = scaler.transform(Y_super_test)
 
 model = Sequential()
 
@@ -47,10 +48,11 @@ model = Sequential()
 #
 # X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.18, random_state=0)#0.25
 
+DROPOUT_RATE = 0.01
 model.add(Dense(3, activation="linear", input_shape=(3,)))
-model.add(Dropout())
+model.add(Dropout(DROPOUT_RATE))
 model.add(Dense(100, activation="relu"))
-model.add(Dropout())
+model.add(Dropout(DROPOUT_RATE))
 model.add(Dense(6, activation="linear"))
 
 model.compile(
@@ -64,7 +66,8 @@ model.summary()
 train_model = model.fit(
     x=X_train,
     y=Y_train,
-    epochs=200,
+    validation_data=(X_val, Y_val),
+    epochs=50,
     verbose=2,
     # validation_data=(X_super_test, Y_super_test),
     callbacks=[tf.keras.callbacks.TensorBoard("logs/1/train")],
@@ -83,23 +86,24 @@ test_acc = train_model.history["val_accuracy"]
 epoch_count = range(1, len(training_loss) + 1)
 
 # Visualize loss history
-plt.figure()
-plt.title("Loss")
-plt.plot(epoch_count, training_loss)
-plt.plot(epoch_count, test_loss)
-plt.legend(["Train", "Test"])
-plt.xlabel("Epoch")
-plt.ylabel("Loss value")
-plt.show()
+fig, (p1, p2) = plt.subplots(2)
+fig.set_size_inches(5, 10)
+
+p1.set_title("Loss")
+p1.plot(epoch_count, training_loss)
+p1.plot(epoch_count, test_loss)
+p1.legend(["Train", "Test"])
+p1.set_xlabel("Epoch")
+p1.set_ylabel("Loss value")
 
 # Visualize accuracy history
-plt.figure()
-plt.title("Acuracy")
-plt.plot(epoch_count, training_acc)
-plt.plot(epoch_count, test_acc)
-plt.legend(["Train", "Test"])
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy value")
+p2.set_title("Acuracy")
+p2.plot(epoch_count, training_acc)
+p2.plot(epoch_count, test_acc)
+p2.legend(["Train", "Test"])
+p2.set_xlabel("Epoch")
+p2.set_ylabel("Accuracy value")
+
 plt.show()
 
 
