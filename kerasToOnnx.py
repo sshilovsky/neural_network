@@ -14,9 +14,12 @@ import tf2onnx
 from keras.models import load_model
 
 
-model = load_model(r'C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\model.h5')
+model = load_model(r"C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\model.h5")
 (onnx_model_proto, storage) = tf2onnx.convert.from_keras(model)
-with open("C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\models\\modelData.onnx", "wb") as f:
+with open(
+    "C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\models\\modelData.onnx",
+    "wb",
+) as f:
     f.write(onnx_model_proto.SerializeToString())
 # onnx_model = keras2onnx.convert_keras(model, model.name)
 #
@@ -25,4 +28,4 @@ with open("C:\\Users\\Admin\\source\\repos\\STL-Viewer\\RobotOmgtu\\models\\mode
 # file.close()
 
 
-#AttributeError: module 'tensorflow.python.keras' has no attribute 'applications'
+# AttributeError: module 'tensorflow.python.keras' has no attribute 'applications'
